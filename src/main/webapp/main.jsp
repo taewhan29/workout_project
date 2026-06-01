@@ -6,7 +6,7 @@ if (userId == null) {
 	out.println("<script>alert('로그인이 필요합니다.'); location.href='user/login.jsp';</script>");
 	return;
 }
-// Github TEST
+
 String userName = "";
 Connection conn = null;
 PreparedStatement pstmt = null;
