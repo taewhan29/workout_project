@@ -38,23 +38,31 @@
     <title>마이페이지</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; }
+        body { background-color: #f4f7f6; font-family: 'Pretendard', sans-serif; }
         .navbar-custom { background-color: #8bb8e8; }
         .navbar-custom .navbar-brand, .navbar-custom .nav-link { color: white; font-weight: bold; }
+        .navbar-custom .nav-link:hover { color: #f8f9fa; }
         .card-profile { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background-color: white; padding: 30px; margin-top: 50px; }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+<nav class="navbar navbar-expand-lg navbar-custom shadow-sm mb-4">
     <div class="container">
         <a class="navbar-brand" href="main.jsp">WORKOUT TRACKER</a>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-link" style="color: white; margin-right: 15px;"><%= userName %> 님</li>
-                <li class="nav-item"><a class="nav-link" href="workoutLog.jsp">운동일지</a></li>
-                <li class="nav-item"><a class="nav-link" href="logoutAction.jsp">로그아웃</a></li>
-            </ul>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto">
+                 <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/workoutLog.jsp">운동 일지</a></li>
+                 <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/supplements">보충제 관리</a></li>
+                 <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/physicalInfo">신체 변화</a></li>
+                 <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/myPage.jsp">마이페이지</a></li>            </ul>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3 fw-bold"><%= userName %> 님</span> 
+                <a href="<%= request.getContextPath() %>/actions/logoutAction.jsp" class="btn btn-sm btn-light text-secondary fw-bold">로그아웃</a>
+            </div>
         </div>
     </div>
 </nav>
@@ -95,5 +103,6 @@ function confirmWithdraw() {
 }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,59 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.* , common.DBConnection, java.util.* "%>
 <%
-    request.setCharacterEncoding("UTF-8");
     String userId = (String) session.getAttribute("userId");
     if (userId == null) {
         out.println("<script>alert('로그인이 필요합니다.'); location.href='user/login.jsp';</script>");
         return;
-    }
-
-    String mode = request.getParameter("mode");
-    if (mode != null) {
-        Connection connUpdate = null;
-        PreparedStatement pstmtUpdate = null;
-        try {
-            connUpdate = DBConnection.getConnection();
-            if (mode.equals("updateMaster")) {
-                String logIdStr = request.getParameter("log_id");
-                String wDate = request.getParameter("workout_date");
-                String bWeight = request.getParameter("body_weight");
-                String cNote = request.getParameter("condition_note");
-                
-                String sql = "UPDATE Workout_Logs SET workout_date = ?, body_weight = ?, condition_note = ? WHERE log_id = ? AND user_id = ?";
-                pstmtUpdate = connUpdate.prepareStatement(sql);
-                pstmtUpdate.setString(1, wDate);
-                pstmtUpdate.setDouble(2, Double.parseDouble(bWeight));
-                pstmtUpdate.setString(3, cNote);
-                pstmtUpdate.setInt(4, Integer.parseInt(logIdStr));
-                pstmtUpdate.setString(5, userId);
-                pstmtUpdate.executeUpdate();
-                out.println("<script>alert('운동 일지 정보가 수정되었습니다.'); location.href='workoutLog.jsp';</script>");
-                return;
-            } else if (mode.equals("updateSet")) {
-                String logIdStr = request.getParameter("log_id");
-                String sOrderStr = request.getParameter("set_order");
-                String weightStr = request.getParameter("weight");
-                String repsStr = request.getParameter("reps");
-                
-                String sql = "UPDATE Set_Records SET weight = ?, reps = ? WHERE log_id = ? AND set_order = ?";
-                pstmtUpdate = connUpdate.prepareStatement(sql);
-                pstmtUpdate.setDouble(1, Double.parseDouble(weightStr));
-                pstmtUpdate.setInt(2, Integer.parseInt(repsStr));
-                pstmtUpdate.setInt(3, Integer.parseInt(logIdStr));
-                pstmtUpdate.setInt(4, Integer.parseInt(sOrderStr));
-                pstmtUpdate.executeUpdate();
-                out.println("<script>alert('세트 정보가 수정되었습니다.'); location.href='workoutLog.jsp';</script>");
-                return;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            out.println("<script>alert('처리 중 에러가 발생했습니다.'); history.back();</script>");
-            return;
-        } finally {
-            if (pstmtUpdate != null) try { pstmtUpdate.close(); } catch (Exception e) {}
-            if (connUpdate != null) try { connUpdate.close(); } catch (Exception e) {}
-        }
     }
 
     String userName = "";
@@ -104,9 +55,10 @@
     <title>운동 일지 목록</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; }
+        body { background-color: #f4f7f6; font-family: 'Pretendard', sans-serif; }
         .navbar-custom { background-color: #8bb8e8; }
         .navbar-custom .navbar-brand, .navbar-custom .nav-link { color: white; font-weight: bold; }
+        .navbar-custom .nav-link:hover { color: #f8f9fa; }
         .card-log { border: none; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; background-color: white; }
         .card-log-header { background-color: #f8f9fa; border-top-left-radius: 15px; border-top-right-radius: 15px; padding: 15px 20px; border-bottom: 1px solid #edf2f7; }
         .card-log-body { padding: 20px; }
@@ -122,24 +74,48 @@
             -moz-appearance: textfield;
         }
     </style>
+    <script>
+        function toggleLogEdit(logId, showEdit) {
+            if (showEdit) {
+                document.getElementById("view-area-" + logId).style.display = "none";
+                document.getElementById("edit-form-" + logId).style.display = "block";
+            } else {
+                document.getElementById("view-area-" + logId).style.display = "block";
+                document.getElementById("edit-form-" + logId).style.display = "none";
+            }
+        }
+        function confirmDelete(logId) {
+            if(confirm("해당 날짜의 모든 세트 데이터와 메인 일지가 영구 삭제됩니다.\n정말 삭제하시겠습니까?")) {
+                location.href = "<%= request.getContextPath() %>/actions/deleteLogAction.jsp?log_id=" + logId;
+            }
+        }
+    </script>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-custom mb-4">
+<nav class="navbar navbar-expand-lg navbar-custom shadow-sm mb-4">
     <div class="container">
         <a class="navbar-brand" href="main.jsp">WORKOUT TRACKER</a>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-link" style="color: white; margin-right: 15px;"><%= userName %> 님</li>
-                <li class="nav-item"><a class="nav-link" href="myPage.jsp">마이페이지</a></li>
-                <li class="nav-item"><a class="nav-link" href="user/logoutAction.jsp">로그아웃</a></li>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav me-auto">
+                 <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/workoutLog.jsp">운동 일지</a></li>
+                    <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/supplements">보충제 관리</a></li>
+                    <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/physicalInfo">신체 변화</a></li>
+                    <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/myPage.jsp">마이페이지</a></li>
             </ul>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3 fw-bold"><%= userName %> 님</span> 
+                <a href="<%= request.getContextPath() %>/actions/logoutAction.jsp" class="btn btn-sm btn-light text-secondary fw-bold">로그아웃</a>
+            </div>
         </div>
     </div>
 </nav>
 
 <div class="container" style="max-width: 800px;">
-    <h3 class="mb-4 text-dark font-weight-bold">나의 운동 기록 내역</h3>
+    <h4 class="mb-4 fw-bold text-secondary">🏋️‍♂️ 나의 운동 기록 내역</h4>
 <%
         int currentLogId = -1;
         boolean isFirstLog = true;
@@ -147,12 +123,21 @@
         String currentWorkoutKey = "";
         boolean isFirstWorkoutInLog = true;
 
+        List<String[]> currentLogSets = new ArrayList<String[]>();
+        String logDate = "";
+        double logWeight = 0.0;
+        String logNote = "";
+
+        StringBuilder viewHtml = new StringBuilder();
+        StringBuilder editHtml = new StringBuilder();
+
         while (rs.next()) {
             hasData = true;
             int logId = rs.getInt("log_id");
             String date = rs.getString("workout_date");
             double weight = rs.getDouble("body_weight");
             String note = rs.getString("condition_note");
+            if(note == null) note = "";
             
             int workoutId = rs.getInt("workout_id");
             String workoutName = rs.getString("workout_name");
@@ -164,81 +149,99 @@
 
             if (logId != currentLogId) {
                 if (!isFirstLog) {
-%>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-<%
+                    viewHtml.append("</tbody></table></div>");
+                    
+                    editHtml.append("</tbody></table></div>");
+                    editHtml.append("<div class='mt-3 d-flex justify-content-end'>");
+                    editHtml.append("<button type='submit' class='btn btn-sm btn-success me-2'>변경사항 저장</button>");
+                    editHtml.append("<button type='button' class='btn btn-sm btn-secondary' onclick='toggleLogEdit(\"").append(currentLogId).append("\", false)'>취소</button>");
+                    editHtml.append("</div></form></div>");
+
+                    out.println("<div class='card card-log'>");
+                    out.println("<div class='card-log-header d-flex justify-content-between align-items-center'>");
+                    out.println("<div><span class='fs-5 fw-bold text-primary'>📅 " + logDate + "</span><span class='ms-3 text-muted fw-semibold'>⚖️ " + logWeight + "kg</span></div>");
+                    out.println("<div><button type='button' class='btn btn-sm btn-outline-primary me-1' onclick='toggleLogEdit(\""+currentLogId+"\", true)'>일지 수정</button>");
+                    out.println("<button type='button' class='btn btn-sm btn-outline-danger' onclick='confirmDelete(\""+currentLogId+"\")'>일지 삭제</button></div></div>");
+                    out.println("<div class='card-log-body'>");
+                    if(!logNote.trim().isEmpty()) {
+                        out.println("<div class='p-3 bg-light rounded mb-3 text-secondary' style='font-size: 0.95rem;'>📝 " + logNote + "</div>");
+                    }
+                    out.println("<div id='view-area-" + currentLogId + "'>" + viewHtml.toString() + "</div>");
+                    out.println("<div id='edit-form-" + currentLogId + "' style='display:none;'>" + editHtml.toString() + "</div>");
+                    out.println("</div></div>");
+
+                    viewHtml.setLength(0);
+                    editHtml.setLength(0);
                 }
                 currentLogId = logId;
                 isFirstLog = false;
                 currentWorkoutKey = "";
                 isFirstWorkoutInLog = true;
-%>
-    <div class="card card-log" id="log_card_<%= logId %>">
-        <div class="card-log-header d-flex justify-content-between align-items-center">
-            <div class="master-info-area d-flex align-items-center">
-                <span class="fs-5 fw-bold text-primary date-text">📅 <%= date %></span>
-                <span class="ms-3 text-muted fw-semibold weight-text"> <%= weight %>kg</span>
-            </div>
-            <div class="master-btn-area">
-                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="enableMasterEdit('<%= logId %>', '<%= date %>', '<%= weight %>')">일지 수정</button>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('<%= logId %>')">일지 삭제</button>
-            </div>
-        </div>
-        <div class="card-log-body">
-            <div class="note-area p-3 bg-light rounded mb-3 text-secondary" style="font-size: 0.95rem;">
-                📝 <span class="note-text"><%= (note != null && !note.trim().isEmpty()) ? note : "등록된 컨디션 메모가 없습니다." %></span>
-            </div>
-<%
+                
+                logDate = date;
+                logWeight = weight;
+                logNote = note;
+
+                editHtml.append("<div id='edit-area-").append(logId).append("'>");
+                editHtml.append("<form action='").append(request.getContextPath()).append("/actions/updateSetAction.jsp' method='post'>");
+                editHtml.append("<input type='hidden' name='log_id' value='").append(logId).append("'>");
+                editHtml.append("<div class='row g-2 mb-3'>");
+                editHtml.append("<div class='col-6'><label class='form-label small fw-bold'>운동 날짜</label><input type='date' name='workout_date' class='form-control form-control-sm' value='").append(date).append("' required></div>");
+                editHtml.append("<div class='col-6'><label class='form-label small fw-bold'>당일 체중 (kg)</label><input type='number' step='0.1' name='body_weight' class='form-control form-control-sm no-spinners' value='").append(weight).append("'></div>");
+                editHtml.append("<div class='col-12'><label class='form-label small fw-bold'>컨디션 메모</label><input type='text' name='condition_note' class='form-control form-control-sm' value='").append(note).append("'></div>");
+                editHtml.append("</div>");
+            }
+
+            String workoutKey = logId + "_" + workoutId;
+            if (!workoutKey.equals(currentWorkoutKey)) {
+                if (!isFirstWorkoutInLog) {
+                    viewHtml.append("</tbody></table>");
+                    editHtml.append("</tbody></table>");
+                }
+                currentWorkoutKey = workoutKey;
+                isFirstWorkoutInLog = false;
+
+                viewHtml.append("<div class='d-flex align-items-center mb-2 mt-3'>");
+                viewHtml.append("<span class='badge badge-part me-2'>").append(partName).append("</span>");
+                viewHtml.append("<span class='fw-bold fs-6 text-dark'>").append(workoutName).append("</span></div>");
+                viewHtml.append("<table class='table table-sm table-bordered table-workout text-center mb-3'><thead><tr><th style='width: 20%;'>세트</th><th style='width: 40%;'>무게</th><th style='width: 40%;'>횟수</th></tr></thead><tbody>");
+
+                editHtml.append("<div class='d-flex align-items-center mb-2 mt-3'>");
+                editHtml.append("<span class='badge badge-part me-2'>").append(partName).append("</span>");
+                editHtml.append("<span class='fw-bold fs-6 text-dark'>").append(workoutName).append("</span></div>");
+                editHtml.append("<table class='table table-sm table-bordered table-workout text-center mb-3'><thead><tr><th style='width: 20%;'>세트</th><th style='width: 40%;'>무게</th><th style='width: 40%;'>횟수</th></tr></thead><tbody>");
+            }
+
+            viewHtml.append("<tr><td>").append(setOrder).append("세트</td><td>").append(setWeight).append(" kg</td><td>").append(reps).append(" 회</td></tr>");
+
+            editHtml.append("<tr><td>").append(setOrder).append("세트</td>");
+            editHtml.append("<td><input type='hidden' name='set_order[]' value='").append(setOrder).append("'>");
+            editHtml.append("<input type='hidden' name='workout_id[]' value='").append(workoutId).append("'>");
+            editHtml.append("<input type='number' step='0.1' name='weight[]' class='form-control form-control-sm text-center d-inline-block no-spinners' style='width: 100px;' value='").append(setWeight).append("' required> kg</td>");
+            editHtml.append("<td><input type='number' name='reps[]' class='form-control form-control-sm text-center d-inline-block' style='width: 100px;' value='").append(reps).append("' required> 회</td></tr>");
         }
 
-        String workoutKey = logId + "_" + workoutId;
-        if (!workoutKey.equals(currentWorkoutKey)) {
-            if (!isFirstWorkoutInLog) {
-%>
-                    </tbody>
-                </table>
-<%
-            }
-            currentWorkoutKey = workoutKey;
-            isFirstWorkoutInLog = false;
-%>
-            <div class="d-flex align-items-center mb-2 mt-3">
-                <span class="badge badge-part me-2"><%= partName %></span>
-                <span class="fw-bold fs-6 text-dark"><%= workoutName %></span>
-            </div>
-            <table class="table table-sm table-bordered table-workout text-center mb-3">
-                <thead>
-                    <tr>
-                        <th style="width: 15%;">세트</th>
-                        <th style="width: 30%;">무게</th>
-                        <th style="width: 30%;">횟수</th>
-                        <th style="width: 25%;">관리</th>
-                    </tr>
-                </thead>
-                <tbody>
-<%
-        }
-%>
-                    <tr id="row_<%= logId %>_<%= setOrder %>">
-                        <td><%= setOrder %>세트</td>
-                        <td class="weight-val"><%= setWeight %> kg</td>
-                        <td class="reps-val"><%= reps %> 회</td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="enableEdit('<%= logId %>', '<%= setOrder %>', '<%= setWeight %>', '<%= reps %>')">수정</button>
-                        </td>
-                    </tr>
-<%
-        }
         if (hasData) {
-%>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-<%
+            viewHtml.append("</tbody></table></div>");
+            
+            editHtml.append("</tbody></table></div>");
+            editHtml.append("<div class='mt-3 d-flex justify-content-end'>");
+            editHtml.append("<button type='submit' class='btn btn-sm btn-success me-2'>변경사항 저장</button>");
+            editHtml.append("<button type='button' class='btn btn-sm btn-secondary' onclick='toggleLogEdit(\"").append(currentLogId).append("\", false)'>취소</button>");
+            editHtml.append("</div></form></div>");
+
+            out.println("<div class='card card-log'>");
+            out.println("<div class='card-log-header d-flex justify-content-between align-items-center'>");
+            out.println("<div><span class='fs-5 fw-bold text-primary'>📅 " + logDate + "</span><span class='ms-3 text-muted fw-semibold'>⚖️ " + logWeight + "kg</span></div>");
+            out.println("<div><button type='button' class='btn btn-sm btn-outline-primary me-1' onclick='toggleLogEdit(\""+currentLogId+"\", true)'>일지 수정</button>");
+            out.println("<button type='button' class='btn btn-sm btn-outline-danger' onclick='confirmDelete(\""+currentLogId+"\")'>일지 삭제</button></div></div>");
+            out.println("<div class='card-log-body'>");
+            if(!logNote.trim().isEmpty()) {
+                out.println("<div class='p-3 bg-light rounded mb-3 text-secondary' style='font-size: 0.95rem;'>📝 " + logNote + "</div>");
+            }
+            out.println("<div id='view-area-" + currentLogId + "'>" + viewHtml.toString() + "</div>");
+            out.println("<div id='edit-form-" + currentLogId + "' style='display:none;'>" + editHtml.toString() + "</div>");
+            out.println("</div></div>");
         } else {
 %>
     <div class="text-center py-5 text-muted">
@@ -250,89 +253,7 @@
 %>
 </div>
 
-<script>
-function confirmDelete(logId) {
-    if(confirm("해당 날짜의 모든 세트 데이터와 메인 일지가 영구 삭제됩니다.\n정말 삭제하시겠습니까?")) {
-        location.href = "actions/deleteLogAction.jsp?log_id=" + logId;
-    }
-}
-
-function enableEdit(logId, setOrder, currentWeight, currentReps) {
-    const row = document.getElementById("row_" + logId + "_" + setOrder);
-    const weightTd = row.querySelector(".weight-val");
-    const repsTd = row.querySelector(".reps-val");
-    const btnTd = row.cells[3];
-
-    weightTd.innerHTML = '<input type="number" step="0.1" class="form-control form-control-sm text-center d-inline-block no-spinners" style="width: 80px;" value="' + currentWeight + '"> kg';
-    repsTd.innerHTML = '<input type="number" class="form-control form-control-sm text-center d-inline-block" style="width: 80px;" value="' + currentReps + '"> 회';
-    
-    btnTd.innerHTML = '<button type="button" class="btn btn-sm btn-success me-1" onclick="saveEdit(\'' + logId + '\', \'' + setOrder + '\')">저장</button>' +
-                       '<button type="button" class="btn btn-sm btn-secondary" onclick="location.reload()">취소</button>';
-}
-
-function saveEdit(logId, setOrder) {
-    const row = document.getElementById("row_" + logId + "_" + setOrder);
-    const weightInput = row.querySelector(".weight-val input").value;
-    const repsInput = row.querySelector(".reps-val input").value;
-
-    if(!weightInput || !repsInput) {
-        alert("무게와 횟수를 올바르게 입력하세요.");
-        return;
-    }
-
-    location.href = "workoutLog.jsp?mode=updateSet&log_id=" + logId + "&set_order=" + setOrder + "&weight=" + weightInput + "&reps=" + repsInput;
-}
-
-function enableMasterEdit(logId, currentDate, currentWeight) {
-    const card = document.getElementById("log_card_" + logId);
-    const infoArea = card.querySelector(".master-info-area");
-    const btnArea = card.querySelector(".master-btn-area");
-    const noteArea = card.querySelector(".note-area");
-    
-    let rawNote = card.querySelector(".note-text").innerText;
-    if(rawNote === "등록된 컨디션 메모가 없습니다.") {
-        rawNote = "";
-    }
-
-    infoArea.innerHTML = '<input type="date" class="form-control form-control-sm d-inline-block me-2" style="width: 140px;" value="' + currentDate + '">' +
-                         '<input type="number" step="0.1" class="form-control form-control-sm d-inline-block no-spinners" style="width: 80px;" value="' + currentWeight + '"> kg';
-    
-    noteArea.innerHTML = '📝 <textarea class="form-control form-control-sm mt-1" rows="2">' + rawNote + '</textarea>';
-
-    btnArea.innerHTML = '<button type="button" class="btn btn-sm btn-success me-1" onclick="saveMasterEdit(\'' + logId + '\')">저장</button>' +
-                        '<button type="button" class="btn btn-sm btn-secondary" onclick="location.reload()">취소</button>';
-}
-
-function saveMasterEdit(logId) {
-    const card = document.getElementById("log_card_" + logId);
-    const inputs = card.querySelectorAll(".master-info-area input");
-    const dateInput = inputs[0].value;
-    const weightInput = inputs[1].value;
-    const noteInput = card.querySelector(".note-area textarea").value;
-
-    if(!dateInput || !weightInput) {
-        alert("날짜와 체중을 올바르게 입력하세요.");
-        return;
-    }
-
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "workoutLog.jsp";
-
-    const params = { mode: "updateMaster", log_id: logId, workout_date: dateInput, body_weight: weightInput, condition_note: noteInput };
-    for(let key in params) {
-        let hiddenField = document.createElement("input");
-        hiddenField.type = "hidden";
-        hiddenField.name = key;
-        hiddenField.value = params[key];
-        form.appendChild(hiddenField);
-    }
-
-    document.body.appendChild(form);
-    form.submit();
-}
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 <%

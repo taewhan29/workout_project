@@ -90,7 +90,8 @@ body {
 			<div class="collapse navbar-collapse">
 				<ul class="navbar-nav me-auto">
 					<li class="nav-item"><a class="nav-link" href="workoutLog.jsp">운동 일지</a></li>
-					<li class="nav-item"><a class="nav-link" href="#">보충제 관리</a></li>
+					<li class="nav-item"><a class="nav-link" href="<%= request.getContextPath() %>/supplements">보충제 관리</a></li>
+					 	<li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/physicalInfo">신체 변화</a></li>
 					<li class="nav-item"><a class="nav-link" href="myPage.jsp">마이페이지</a></li>
 				</ul>
 				<div class="d-flex align-items-center">
@@ -122,7 +123,7 @@ body {
 						<img src="https://img.icons8.com/?size=100&id=MeZiNPN5N5O1&format=png&color=000000" class="icon-img" alt="보충제 현황">
 						<h5 class="card-title fw-bold">보충제 현황</h5>
 						<p class="card-text text-muted small">남은 재고를 확인하고<br>섭취량을 체크하세요.</p>
-						<a href="#" class="btn btn-custom px-4 mt-2">관리하기</a>
+						<a href="<%= request.getContextPath() %>/supplements" class="btn btn-custom px-4 mt-2">관리하기</a>
 					</div>
 				</div>
 			</div>
@@ -133,7 +134,7 @@ body {
 						<img src="https://img.icons8.com/?size=100&id=103987&format=png&color=000000" class="icon-img" alt="내 정보">
 						<h5 class="card-title fw-bold">신체 변화</h5>
 						<p class="card-text text-muted small">그래프로 시각화된<br>성장 지표를 확인하세요.</p>
-						<a href="myPage.jsp" class="btn btn-custom px-4 mt-2">확인하기</a>
+						<a href="physicalHistory.jsp" class="btn btn-custom px-4 mt-2">확인하기</a>
 					</div>
 				</div>
 			</div>
