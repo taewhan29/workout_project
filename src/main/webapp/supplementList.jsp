@@ -76,16 +76,7 @@
                 </ul>
                 
                 <div class="d-flex align-items-center">
-                    <span class="text-white me-3 fw-bold">
-                        <c:choose>
-                            <c:when test="${not empty userName}">
-                                ${userName}
-                            </c:when>
-                            <c:otherwise>
-                                회원
-                            </c:otherwise>
-                        </c:choose> 님
-                    </span> 
+                    <span class="text-white me-3 fw-bold"><c:choose><c:when test="${not empty userName}">${userName}</c:when><c:otherwise>회원</c:otherwise></c:choose>님, 환영합니다.</span> 
                     <a href="actions/logoutAction.jsp" class="btn btn-sm btn-light text-secondary fw-bold">로그아웃</a>
                 </div>
                 

@@ -37,7 +37,7 @@
                     <li class="nav-item"><a class="nav-link" href="myPage.jsp">마이페이지</a></li>
                 </ul>
                 <div class="d-flex align-items-center">
-                    <span class="text-white me-3 fw-bold">${userName} 님</span> 
+                    <span class="text-white me-3 fw-bold">${userName}님, 환영합니다.</span> 
                     <a href="${pageContext.request.contextPath}/actions/logoutAction.jsp" class="btn btn-sm btn-light text-secondary fw-bold">로그아웃</a>
                 </div>
             </div>

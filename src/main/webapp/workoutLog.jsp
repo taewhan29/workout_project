@@ -73,6 +73,13 @@
         .no-spinners {
             -moz-appearance: textfield;
         }
+        .table-responsive-custom {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .workout-input-box {
+            max-width: 80px;
+        }
     </style>
     <script>
         function toggleLogEdit(logId, showEdit) {
@@ -107,7 +114,7 @@
                     <li class="nav-item"><a class="nav-link" href="${pageContext.request.contextPath}/myPage.jsp">마이페이지</a></li>
             </ul>
             <div class="d-flex align-items-center">
-                <span class="text-white me-3 fw-bold"><%= userName %> 님</span> 
+                <span class="text-white me-3 fw-bold"><%= userName %>님, 환영합니다.</span> 
                 <a href="<%= request.getContextPath() %>/actions/logoutAction.jsp" class="btn btn-sm btn-light text-secondary fw-bold">로그아웃</a>
             </div>
         </div>
@@ -123,7 +130,6 @@
         String currentWorkoutKey = "";
         boolean isFirstWorkoutInLog = true;
 
-        List<String[]> currentLogSets = new ArrayList<String[]>();
         String logDate = "";
         double logWeight = 0.0;
         String logNote = "";
@@ -142,6 +148,8 @@
             int workoutId = rs.getInt("workout_id");
             String workoutName = rs.getString("workout_name");
             String partName = rs.getString("part_name");
+            if(workoutName == null) workoutName = "알 수 없는 운동";
+            if(partName == null) partName = "전신";
             
             int setOrder = rs.getInt("set_order");
             double setWeight = rs.getDouble("weight");
@@ -149,13 +157,13 @@
 
             if (logId != currentLogId) {
                 if (!isFirstLog) {
-                    viewHtml.append("</tbody></table></div>");
+                    viewHtml.append("</tbody></table></div></div>");
                     
-                    editHtml.append("</tbody></table></div>");
-                    editHtml.append("<div class='mt-3 d-flex justify-content-end'>");
-                    editHtml.append("<button type='submit' class='btn btn-sm btn-success me-2'>변경사항 저장</button>");
-                    editHtml.append("<button type='button' class='btn btn-sm btn-secondary' onclick='toggleLogEdit(\"").append(currentLogId).append("\", false)'>취소</button>");
-                    editHtml.append("</div></form></div>");
+                    editHtml.append("</tbody></table></div></div>");
+                    editHtml.append("<div class='mt-4 d-flex justify-content-end'>");
+                    editHtml.append("<button type='submit' class='btn btn-sm btn-success me-2 fw-bold'>변경사항 저장</button>");
+                    editHtml.append("<button type='button' class='btn btn-sm btn-secondary fw-bold' onclick='toggleLogEdit(\"").append(currentLogId).append("\", false)'>취소</button>");
+                    editHtml.append("</div></form>");
 
                     out.println("<div class='card card-log'>");
                     out.println("<div class='card-log-header d-flex justify-content-between align-items-center'>");
@@ -182,34 +190,35 @@
                 logWeight = weight;
                 logNote = note;
 
-                editHtml.append("<div id='edit-area-").append(logId).append("'>");
                 editHtml.append("<form action='").append(request.getContextPath()).append("/actions/updateSetAction.jsp' method='post'>");
                 editHtml.append("<input type='hidden' name='log_id' value='").append(logId).append("'>");
-                editHtml.append("<div class='row g-2 mb-3'>");
-                editHtml.append("<div class='col-6'><label class='form-label small fw-bold'>운동 날짜</label><input type='date' name='workout_date' class='form-control form-control-sm' value='").append(date).append("' required></div>");
-                editHtml.append("<div class='col-6'><label class='form-label small fw-bold'>당일 체중 (kg)</label><input type='number' step='0.1' name='body_weight' class='form-control form-control-sm no-spinners' value='").append(weight).append("'></div>");
-                editHtml.append("<div class='col-12'><label class='form-label small fw-bold'>컨디션 메모</label><input type='text' name='condition_note' class='form-control form-control-sm' value='").append(note).append("'></div>");
+                editHtml.append("<div class='row g-2 mb-3 border-bottom pb-3'>");
+                editHtml.append("<div class='col-6'><label class='form-label small fw-bold text-secondary'>운동 날짜</label><input type='date' name='workout_date' class='form-control form-control-sm' value='").append(date).append("' required></div>");
+                editHtml.append("<div class='col-6'><label class='form-label small fw-bold text-secondary'>당일 체중 (kg)</label><input type='number' step='0.1' name='body_weight' class='form-control form-control-sm no-spinners' value='").append(weight).append("'></div>");
+                editHtml.append("<div class='col-12 mt-2'><label class='form-label small fw-bold text-secondary'>컨디션 메모</label><input type='text' name='condition_note' class='form-control form-control-sm' value='").append(note).append("'></div>");
                 editHtml.append("</div>");
             }
 
             String workoutKey = logId + "_" + workoutId;
             if (!workoutKey.equals(currentWorkoutKey)) {
                 if (!isFirstWorkoutInLog) {
-                    viewHtml.append("</tbody></table>");
-                    editHtml.append("</tbody></table>");
+                    viewHtml.append("</tbody></table></div></div>");
+                    editHtml.append("</tbody></table></div></div>");
                 }
                 currentWorkoutKey = workoutKey;
                 isFirstWorkoutInLog = false;
 
+                viewHtml.append("<div class='mb-3'>");
                 viewHtml.append("<div class='d-flex align-items-center mb-2 mt-3'>");
                 viewHtml.append("<span class='badge badge-part me-2'>").append(partName).append("</span>");
                 viewHtml.append("<span class='fw-bold fs-6 text-dark'>").append(workoutName).append("</span></div>");
-                viewHtml.append("<table class='table table-sm table-bordered table-workout text-center mb-3'><thead><tr><th style='width: 20%;'>세트</th><th style='width: 40%;'>무게</th><th style='width: 40%;'>횟수</th></tr></thead><tbody>");
+                viewHtml.append("<div class='table-responsive-custom'><table class='table table-sm table-bordered table-workout text-center mb-0'><thead><tr><th style='width: 20%;'>세트</th><th style='width: 40%;'>무게</th><th style='width: 40%;'>횟수</th></tr></thead><tbody>");
 
+                editHtml.append("<div class='mb-3'>");
                 editHtml.append("<div class='d-flex align-items-center mb-2 mt-3'>");
                 editHtml.append("<span class='badge badge-part me-2'>").append(partName).append("</span>");
                 editHtml.append("<span class='fw-bold fs-6 text-dark'>").append(workoutName).append("</span></div>");
-                editHtml.append("<table class='table table-sm table-bordered table-workout text-center mb-3'><thead><tr><th style='width: 20%;'>세트</th><th style='width: 40%;'>무게</th><th style='width: 40%;'>횟수</th></tr></thead><tbody>");
+                editHtml.append("<div class='table-responsive-custom'><table class='table table-sm table-bordered table-workout text-center mb-0'><thead><tr><th style='width: 20%;'>세트</th><th style='width: 40%;'>무게</th><th style='width: 40%;'>횟수</th></tr></thead><tbody>");
             }
 
             viewHtml.append("<tr><td>").append(setOrder).append("세트</td><td>").append(setWeight).append(" kg</td><td>").append(reps).append(" 회</td></tr>");
@@ -217,18 +226,18 @@
             editHtml.append("<tr><td>").append(setOrder).append("세트</td>");
             editHtml.append("<td><input type='hidden' name='set_order[]' value='").append(setOrder).append("'>");
             editHtml.append("<input type='hidden' name='workout_id[]' value='").append(workoutId).append("'>");
-            editHtml.append("<input type='number' step='0.1' name='weight[]' class='form-control form-control-sm text-center d-inline-block no-spinners' style='width: 100px;' value='").append(setWeight).append("' required> kg</td>");
-            editHtml.append("<td><input type='number' name='reps[]' class='form-control form-control-sm text-center d-inline-block' style='width: 100px;' value='").append(reps).append("' required> 회</td></tr>");
+            editHtml.append("<div class='d-flex justify-content-center align-items-center'><input type='number' step='0.1' name='weight[]' class='form-control form-control-sm text-center no-spinners workout-input-box' value='").append(setWeight).append("' required><span class='ms-1 small text-muted'>kg</span></div></td>");
+            editHtml.append("<td><div class='d-flex justify-content-center align-items-center'><input type='number' name='reps[]' class='form-control form-control-sm text-center workout-input-box' value='").append(reps).append("' required><span class='ms-1 small text-muted'>회</span></div></td></tr>");
         }
 
         if (hasData) {
-            viewHtml.append("</tbody></table></div>");
+            viewHtml.append("</tbody></table></div></div>");
             
-            editHtml.append("</tbody></table></div>");
-            editHtml.append("<div class='mt-3 d-flex justify-content-end'>");
-            editHtml.append("<button type='submit' class='btn btn-sm btn-success me-2'>변경사항 저장</button>");
-            editHtml.append("<button type='button' class='btn btn-sm btn-secondary' onclick='toggleLogEdit(\"").append(currentLogId).append("\", false)'>취소</button>");
-            editHtml.append("</div></form></div>");
+            editHtml.append("</tbody></table></div></div>");
+            editHtml.append("<div class='mt-4 d-flex justify-content-end'>");
+            editHtml.append("<button type='submit' class='btn btn-sm btn-success me-2 fw-bold'>변경사항 저장</button>");
+            editHtml.append("<button type='button' class='btn btn-sm btn-secondary fw-bold' onclick='toggleLogEdit(\"").append(currentLogId).append("\", false)'>취소</button>");
+            editHtml.append("</div></form>");
 
             out.println("<div class='card card-log'>");
             out.println("<div class='card-log-header d-flex justify-content-between align-items-center'>");
